@@ -31,11 +31,34 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    // TODO - Data base name
+    // ! Data base name
+
     const db = client.db("bistroDB");
     const database = db.collection("menus");
     const reviewsDataCollection = db.collection("reviews");
     const cartCollection = db.collection("carts");
+    const userCollection = db.collection("users");
+
+    // user load api
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      console.log("Recived user data:", user);
+      // insert email if user does exit
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "User already exitsts" });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // For user data seeing
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
 
     app.get("/menu", async (req, res) => {
       const result = await database.find().toArray();
