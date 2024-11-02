@@ -1,5 +1,6 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -39,6 +40,15 @@ async function run() {
     const cartCollection = db.collection("carts");
     const userCollection = db.collection("users");
 
+    // jwt related api
+
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
     // user load api
 
     app.post("/users", async (req, res) => {
@@ -54,8 +64,13 @@ async function run() {
       res.send(result);
     });
 
+    // middleware
+    const verifyToken = (req, res, next) => {
+      console.log("inside verify to ", req.headers);
+      next();
+    };
     // For user data seeing
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
