@@ -49,6 +49,12 @@ async function run() {
       });
       res.send({ token });
     });
+
+    // Middleware
+    const verifycToken = (req, res, next) => {
+      console.log(req.headers);
+      next();
+    };
     // user load api
 
     app.post("/users", async (req, res) => {
@@ -64,11 +70,6 @@ async function run() {
       res.send(result);
     });
 
-    // middleware
-    const verifyToken = (req, res, next) => {
-      console.log("inside verify to ", req.headers);
-      next();
-    };
     // For user data seeing
     app.get("/users", verifyToken, async (req, res) => {
       const result = await userCollection.find().toArray();
