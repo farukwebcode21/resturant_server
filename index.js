@@ -52,27 +52,35 @@ async function run() {
 
     // Middleware
     const verifycToken = (req, res, next) => {
-      console.log(req.headers);
-      next();
+      console.log("inside verify token:", req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "Unauthorized" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "forbidden access" });
+        }
+        req.user = decoded;
+        next();
+      });
     };
+
     // user load api
+
+    app.get("/users", verifycToken, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
 
     app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log("Recived user data:", user);
-      // insert email if user does exit
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
       if (existingUser) {
         return res.send({ message: "User already exitsts" });
       }
       const result = await userCollection.insertOne(user);
-      res.send(result);
-    });
-
-    // For user data seeing
-    app.get("/users", verifyToken, async (req, res) => {
-      const result = await userCollection.find().toArray();
       res.send(result);
     });
 
